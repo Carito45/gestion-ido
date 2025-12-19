@@ -1,0 +1,1065 @@
+// ========================================
+// CONFIGURACIÓN Y UTILIDADES
+// ========================================
+
+const API_URL = window.location.origin;
+let currentUser = null;
+
+function getToken() {
+    return localStorage.getItem('token');
+}
+
+async function fetchAPI(endpoint, options = {}) {
+    const token = getToken();
+    
+    const defaultOptions = {
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        }
+    };
+    
+    const mergedOptions = {
+        ...defaultOptions,
+        ...options,
+        headers: {
+            ...defaultOptions.headers,
+            ...options.headers
+        }
+    };
+    
+    try {
+        const response = await fetch(`${API_URL}${endpoint}`, mergedOptions);
+        const data = await response.json();
+        
+        if (!response.ok) {
+            if (response.status === 401) {
+                localStorage.removeItem('token');
+                window.location.href = '/pages/login.html';
+                return;
+            }
+            throw new Error(data.error || 'Error en la petición');
+        }
+        
+        return data;
+    } catch (error) {
+        console.error('Error en fetchAPI:', error);
+        throw error;
+    }
+}
+
+function showAlert(message, type = 'success') {
+    const alertDiv = document.createElement('div');
+    alertDiv.className = `alert alert-${type}`;
+    alertDiv.textContent = message;
+    alertDiv.style.position = 'fixed';
+    alertDiv.style.top = '20px';
+    alertDiv.style.right = '20px';
+    alertDiv.style.zIndex = '10000';
+    alertDiv.style.minWidth = '300px';
+    
+    document.body.appendChild(alertDiv);
+    
+    setTimeout(() => {
+        alertDiv.remove();
+    }, 3000);
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
+// ========================================
+// INICIALIZACIÓN
+// ========================================
+
+document.addEventListener('DOMContentLoaded', async () => {
+    console.log('🚀 Iniciando sistema...');
+    
+    const token = getToken();
+    if (!token) {
+        console.log('❌ No hay token, redirigiendo a login');
+        window.location.href = '/pages/login.html';
+        return;
+    }
+    
+    console.log('✅ Token encontrado');
+    
+    const modalFunctions = [
+        'createModal',
+        'closeModal',
+        'modalNuevoAfiliado',
+        'modalEditarAfiliado',
+        'modalNuevaEmpresa',
+        'modalEditarEmpresa',
+        'modalNuevoProfesional',
+        'modalEditarProfesional',
+        'modalNuevoUsuario',
+        'modalDocumentos',
+        'modalAtencionMedica'
+    ];
+    
+    const missingFunctions = modalFunctions.filter(fn => typeof window[fn] !== 'function');
+    
+    if (missingFunctions.length > 0) {
+        console.warn('⚠️ Funciones de modal no disponibles:', missingFunctions);
+        console.warn('⚠️ Asegúrate de que modals.js esté incluido en el HTML');
+    } else {
+        console.log('✅ Todas las funciones de modal están disponibles');
+    }
+    
+    await loadUserInfo();
+    await loadDashboardStats();
+    setupNavigation();
+    setupLogout();
+    showSection('inicio');
+    
+    console.log('✅ Sistema iniciado correctamente');
+});
+
+// ========================================
+// INFORMACIÓN DEL USUARIO
+// ========================================
+
+async function loadUserInfo() {
+    try {
+        const data = await fetchAPI('/api/auth/me');
+        currentUser = data.usuario || data.data || data;
+        
+        document.getElementById('user-name').textContent = currentUser.nombre;
+        document.getElementById('user-role').textContent = currentUser.rol;
+        
+        const inicial = currentUser.nombre.charAt(0).toUpperCase();
+        document.getElementById('user-avatar').textContent = inicial;
+        
+        if (currentUser.rol === 'admin') {
+            document.querySelectorAll('.admin-only').forEach(el => {
+                el.classList.remove('hidden');
+            });
+        }
+    } catch (error) {
+        console.error('Error cargando usuario:', error);
+        showAlert('Error cargando información del usuario', 'error');
+    }
+}
+
+// ========================================
+// DASHBOARD Y ESTADÍSTICAS
+// ========================================
+
+async function loadDashboardStats() {
+    try {
+        console.log('📊 Cargando estadísticas del dashboard...');
+        
+        const afiliadosData = await fetchAPI('/api/afiliados');
+        const afiliados = afiliadosData.data || afiliadosData.afiliados || [];
+        const totalAfiliados = afiliadosData.count || afiliados.length || 0;
+        const activos = afiliados.filter(a => a.estado === 'activo').length;
+        
+        console.log('📊 Total afiliados:', totalAfiliados, 'Activos:', activos);
+        
+        const statAfiliados = document.getElementById('stat-afiliados');
+        const statActivos = document.getElementById('stat-activos');
+        
+        if (statAfiliados) statAfiliados.textContent = totalAfiliados;
+        if (statActivos) statActivos.textContent = activos;
+        
+        const empresasData = await fetchAPI('/api/empresas');
+        const statEmpresas = document.getElementById('stat-empresas');
+        if (statEmpresas) {
+            statEmpresas.textContent = empresasData.count || empresasData.total || (empresasData.data || empresasData.empresas || []).length || 0;
+        }
+        
+        const profesionalesData = await fetchAPI('/api/profesionales');
+        const statProfesionales = document.getElementById('stat-profesionales');
+        if (statProfesionales) {
+            statProfesionales.textContent = profesionalesData.count || profesionalesData.total || (profesionalesData.data || profesionalesData.profesionales || []).length || 0;
+        }
+        
+        if (currentUser && currentUser.rol === 'admin') {
+            const usuariosData = await fetchAPI('/api/auth/usuarios');
+            const statUsuarios = document.getElementById('stat-usuarios');
+            if (statUsuarios) {
+                const usuarios = usuariosData.data || usuariosData.usuarios || [];
+                statUsuarios.textContent = usuarios.length;
+            }
+        }
+        
+        console.log('✅ Estadísticas cargadas');
+    } catch (error) {
+        console.error('❌ Error cargando estadísticas:', error);
+        const statAfiliados = document.getElementById('stat-afiliados');
+        const statActivos = document.getElementById('stat-activos');
+        if (statAfiliados) statAfiliados.textContent = '0';
+        if (statActivos) statActivos.textContent = '0';
+    }
+}
+
+// ========================================
+// NAVEGACIÓN
+// ========================================
+
+function setupNavigation() {
+    const navLinks = document.querySelectorAll('.nav-link[data-section]');
+    
+    navLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const section = link.dataset.section;
+            
+            navLinks.forEach(l => l.classList.remove('active'));
+            link.classList.add('active');
+            
+            showSection(section);
+        });
+    });
+}
+
+function showSection(sectionName) {
+    if (sectionName === 'facturacion') {
+        window.location.href = '/pages/facturacion.html';
+        return;
+    }
+    
+    document.querySelectorAll('.section').forEach(section => {
+        section.classList.add('hidden');
+    });
+    
+    const section = document.getElementById(`section-${sectionName}`);
+    if (section) {
+        section.classList.remove('hidden');
+    }
+    
+    const titles = {
+        'inicio': 'Dashboard',
+        'afiliados': 'Gestión de Afiliados',
+        'empresas': 'Empresas Prestadoras',
+        'profesionales': 'Gestión de Profesionales',
+        'usuarios': 'Gestión de Usuarios',
+        'facturacion': 'Facturación'
+    };
+    document.getElementById('page-title').textContent = titles[sectionName] || 'Dashboard';
+    
+    switch(sectionName) {
+        case 'afiliados':
+            loadAfiliados();
+            setupAfiliadosHandlers();
+            break;
+        case 'empresas':
+            loadEmpresas();
+            setupEmpresasHandlers();
+            break;
+        case 'profesionales':
+            loadProfesionales();
+            setupProfesionalesHandlers();
+            break;
+        case 'usuarios':
+            if (currentUser.rol === 'admin') {
+                loadUsuarios();
+                setupUsuariosHandlers();
+            }
+            break;
+    }
+}
+
+// ========================================
+// AFILIADOS
+// ========================================
+
+async function loadAfiliados() {
+    try {
+        const tbody = document.getElementById('tbody-afiliados');
+        if (!tbody) {
+            console.error('❌ No se encontró el elemento tbody-afiliados');
+            return;
+        }
+        
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">Cargando...</td></tr>';
+        
+        console.log('🔄 Cargando afiliados...');
+        const data = await fetchAPI('/api/afiliados');
+        
+        console.log('📦 Respuesta completa:', data);
+        
+        const afiliados = data.data || data.afiliados || [];
+        
+        console.log('✅ Afiliados procesados:', afiliados);
+        console.log('📊 Cantidad:', afiliados.length);
+        
+        if (!Array.isArray(afiliados)) {
+            console.error('❌ Los datos no son un array:', typeof afiliados);
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">Error: Formato de datos inválido</td></tr>';
+            return;
+        }
+        
+        if (afiliados.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">No hay afiliados registrados</td></tr>';
+            return;
+        }
+        
+        renderAfiliadosTable(afiliados);
+        console.log('✅ Tabla renderizada correctamente');
+    } catch (error) {
+        console.error('❌ Error cargando afiliados:', error);
+        showAlert('Error cargando afiliados', 'error');
+        const tbody = document.getElementById('tbody-afiliados');
+        if (tbody) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">Error al cargar datos</td></tr>';
+        }
+    }
+}
+
+function setupAfiliadosHandlers() {
+    const btnNuevo = document.getElementById('btn-nuevo-afiliado');
+    if (btnNuevo) {
+        btnNuevo.onclick = () => {
+            modalNuevoAfiliado();
+        };
+    }
+    
+    const buscarInput = document.getElementById('buscar-afiliado');
+    if (buscarInput) {
+        buscarInput.oninput = debounce(async (e) => {
+            const buscar = e.target.value.trim();
+            if (buscar.length >= 3 || buscar.length === 0) {
+                try {
+                    console.log('🔍 Buscando:', buscar);
+                    const data = await fetchAPI(`/api/afiliados?buscar=${encodeURIComponent(buscar)}`);
+                    console.log('📦 Resultado búsqueda:', data);
+                    const afiliados = data.data || data.afiliados || [];
+                    console.log('📊 Afiliados encontrados:', afiliados.length);
+                    renderAfiliadosTable(afiliados);
+                } catch (error) {
+                    console.error('Error en búsqueda:', error);
+                }
+            }
+        }, 300);
+    }
+    
+    const filtroEstado = document.getElementById('filtro-estado-afiliado');
+    if (filtroEstado) {
+        filtroEstado.onchange = async (e) => {
+            const estado = e.target.value;
+            try {
+                console.log('🔍 Filtrando por estado:', estado);
+                const endpoint = estado ? `/api/afiliados?estado=${estado}` : '/api/afiliados';
+                const data = await fetchAPI(endpoint);
+                console.log('📦 Resultado filtro:', data);
+                const afiliados = data.data || data.afiliados || [];
+                console.log('📊 Afiliados filtrados:', afiliados.length);
+                renderAfiliadosTable(afiliados);
+            } catch (error) {
+                console.error('Error en filtro:', error);
+            }
+        };
+    }
+}
+
+function renderAfiliadosTable(afiliados) {
+    const tbody = document.getElementById('tbody-afiliados');
+    
+    if (!Array.isArray(afiliados)) {
+        console.error('renderAfiliadosTable recibió datos inválidos:', afiliados);
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">Error al cargar datos</td></tr>';
+        return;
+    }
+    
+    if (afiliados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">No se encontraron resultados</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = afiliados.map(afiliado => `
+        <tr>
+            <td>${afiliado.nombre_completo || ''}</td>
+            <td>${afiliado.dni || ''}</td>
+            <td>${afiliado.numero_afiliado || ''}</td>
+            <td>${afiliado.obra_social || '-'}</td>
+            <td>
+                <span class="badge badge-${afiliado.estado === 'activo' ? 'success' : 'danger'}">
+                    ${afiliado.estado || 'N/A'}
+                </span>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline" onclick="if(window.verAfiliado) window.verAfiliado(${afiliado.id})">Ver</button>
+                <button class="btn btn-sm btn-outline" onclick="if(window.editarAfiliado) window.editarAfiliado(${afiliado.id})">Editar</button>
+                <button class="btn btn-sm btn-danger" onclick="if(window.eliminarAfiliado) window.eliminarAfiliado(${afiliado.id}, '${(afiliado.nombre_completo || '').replace(/'/g, "\\'")}', '${(afiliado.numero_afiliado || '').replace(/'/g, "\\'")}')">🗑️</button>
+                <button class="btn btn-sm btn-primary" onclick="if(window.modalDocumentos) window.modalDocumentos(${afiliado.id}, '${(afiliado.nombre_completo || '').replace(/'/g, "\\'")}')">📄 Docs</button>
+                <button class="btn btn-sm btn-success" onclick="if(window.modalAtencionMedica) window.modalAtencionMedica(${afiliado.id}, '${(afiliado.nombre_completo || '').replace(/'/g, "\\'")}')">🏥 Atención</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+window.verAfiliado = async (id) => {
+    console.log('👁️ Intentando ver afiliado ID:', id);
+    
+    try {
+        const response = await fetchAPI(`/api/afiliados/${id}`);
+        console.log('📦 Respuesta del servidor:', response);
+        
+        const afiliado = response.data || response.afiliado || response;
+        
+        if (!afiliado || !afiliado.nombre_completo) {
+            console.error('❌ Datos del afiliado inválidos:', afiliado);
+            showAlert('No se encontró el afiliado', 'error');
+            return;
+        }
+        
+        console.log('✅ Afiliado encontrado:', afiliado.nombre_completo);
+        
+        const content = `
+            <div style="line-height: 1.8;">
+                <p><strong>Nombre:</strong> ${afiliado.nombre_completo || 'N/A'}</p>
+                <p><strong>DNI:</strong> ${afiliado.dni || 'N/A'}</p>
+                <p><strong>Edad:</strong> ${afiliado.edad || 'N/A'} años</p>
+                <p><strong>Sexo:</strong> ${afiliado.sexo || 'N/A'}</p>
+                ${afiliado.telefono ? `<p><strong>Teléfono:</strong> ${afiliado.telefono}</p>` : ''}
+                ${afiliado.email ? `<p><strong>Email:</strong> ${afiliado.email}</p>` : ''}
+                <p><strong>Dirección:</strong> ${afiliado.direccion || 'N/A'}</p>
+                <p><strong>Número de Afiliado:</strong> ${afiliado.numero_afiliado || 'N/A'}</p>
+                ${afiliado.obra_social ? `<p><strong>Obra Social:</strong> ${afiliado.obra_social}</p>` : ''}
+                ${afiliado.plan ? `<p><strong>Plan:</strong> ${afiliado.plan}</p>` : ''}
+                ${afiliado.prestador_nombre ? `<p><strong>Prestador:</strong> ${afiliado.prestador_nombre}</p>` : ''}
+                ${afiliado.diagnostico ? `<p><strong>Diagnóstico:</strong> ${afiliado.diagnostico}</p>` : ''}
+                <p><strong>Fecha de Ingreso:</strong> ${afiliado.fecha_ingreso ? new Date(afiliado.fecha_ingreso).toLocaleDateString() : 'N/A'}</p>
+                ${afiliado.fecha_egreso ? `<p><strong>Fecha de Egreso:</strong> ${new Date(afiliado.fecha_egreso).toLocaleDateString()}</p>` : ''}
+                ${afiliado.medico_tratante ? `<p><strong>Médico Tratante:</strong> ${afiliado.medico_tratante}</p>` : ''}
+                <p><strong>Estado:</strong> <span class="badge badge-${afiliado.estado === 'activo' ? 'success' : 'danger'}">${afiliado.estado || 'N/A'}</span></p>
+                ${afiliado.observaciones ? `<p><strong>Observaciones:</strong> ${afiliado.observaciones}</p>` : ''}
+            </div>
+        `;
+        
+        const footer = `
+            <button class="btn btn-outline" onclick="if(window.closeModal) window.closeModal()">Cerrar</button>
+            <button class="btn btn-primary" onclick="if(window.closeModal) window.closeModal(); if(window.modalEditarAfiliado) window.modalEditarAfiliado(${id})">Editar</button>
+        `;
+        
+        if (typeof window.createModal === 'function') {
+            window.createModal('Detalles del Afiliado', content, footer);
+            console.log('✅ Modal creado');
+        } else {
+            console.error('❌ createModal no está disponible');
+            showAlert('Error: Sistema de modales no cargado', 'error');
+        }
+    } catch (error) {
+        console.error('❌ Error en verAfiliado:', error);
+        console.error('Stack trace:', error.stack);
+        showAlert('Error cargando detalles del afiliado: ' + error.message, 'error');
+    }
+};
+
+window.editarAfiliado = async (id) => {
+    console.log('✏️ Intentando editar afiliado ID:', id);
+    
+    try {
+        if (typeof window.modalEditarAfiliado === 'function') {
+            await window.modalEditarAfiliado(id);
+            console.log('✅ Modal de edición abierto');
+        } else {
+            console.error('❌ modalEditarAfiliado no está disponible');
+            showAlert('Error: Función no disponible', 'error');
+        }
+    } catch (error) {
+        console.error('❌ Error en editarAfiliado:', error);
+        console.error('Stack trace:', error.stack);
+        showAlert('Error al abrir editor: ' + error.message, 'error');
+    }
+};
+
+window.eliminarAfiliado = async (id, nombreCompleto, numeroAfiliado) => {
+    try {
+        if (!confirm(`¿Estás seguro de eliminar al afiliado "${nombreCompleto}"?\n\nNúmero de Afiliado: ${numeroAfiliado}\n\nEsta acción eliminará también:\n- Todos sus documentos\n- Registros de atención médica\n- Relación con facturas\n\nEsta acción NO se puede deshacer.`)) {
+            return;
+        }
+        
+        if (!confirm(`⚠️ ÚLTIMA CONFIRMACIÓN\n\nSe eliminará permanentemente:\n${nombreCompleto} (${numeroAfiliado})\n\n¿Continuar?`)) {
+            return;
+        }
+        
+        await fetchAPI(`/api/afiliados/${id}`, { method: 'DELETE' });
+        
+        showAlert('Afiliado eliminado exitosamente', 'success');
+        loadAfiliados();
+        loadDashboardStats();
+        
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error al eliminar afiliado: ' + error.message, 'error');
+    }
+};
+
+// ========================================
+// EMPRESAS
+// ========================================
+
+async function loadEmpresas() {
+    try {
+        const tbody = document.getElementById('tbody-empresas');
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">Cargando...</td></tr>';
+        
+        const data = await fetchAPI('/api/empresas');
+        const empresas = data.data || data.empresas || [];
+        
+        if (empresas.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" class="text-center">No hay empresas registradas</td></tr>';
+            return;
+        }
+        
+        renderEmpresasTable(empresas);
+    } catch (error) {
+        console.error('Error cargando empresas:', error);
+        showAlert('Error cargando empresas', 'error');
+    }
+}
+
+function setupEmpresasHandlers() {
+    document.getElementById('btn-nueva-empresa').onclick = () => {
+        modalNuevaEmpresa();
+    };
+    
+    document.getElementById('buscar-empresa').oninput = debounce(async (e) => {
+        const buscar = e.target.value.trim();
+        const estado = document.getElementById('filtro-estado-empresa').value;
+        
+        let query = '';
+        if (buscar.length >= 3 || buscar.length === 0) {
+            if (buscar) query += `buscar=${encodeURIComponent(buscar)}`;
+            if (estado) query += (query ? '&' : '') + `estado=${estado}`;
+            
+            const data = await fetchAPI(`/api/empresas${query ? '?' + query : ''}`);
+            const empresas = data.data || data.empresas || [];
+            renderEmpresasTable(empresas);
+        }
+    }, 300);
+    
+    document.getElementById('filtro-estado-empresa').onchange = async (e) => {
+        const estado = e.target.value;
+        const buscar = document.getElementById('buscar-empresa').value.trim();
+        
+        let query = '';
+        if (estado) query += `estado=${estado}`;
+        if (buscar) query += (query ? '&' : '') + `buscar=${encodeURIComponent(buscar)}`;
+        
+        const data = await fetchAPI(`/api/empresas${query ? '?' + query : ''}`);
+        const empresas = data.data || data.empresas || [];
+        renderEmpresasTable(empresas);
+    };
+}
+
+function renderEmpresasTable(empresas) {
+    const tbody = document.getElementById('tbody-empresas');
+    if (empresas.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">No se encontraron resultados</td></tr>';
+        return;
+    }
+    tbody.innerHTML = empresas.map(empresa => `
+        <tr>
+            <td>${empresa.nombre}</td>
+            <td>${empresa.cuit || '-'}</td>
+            <td>${empresa.telefono || '-'}</td>
+            <td>${empresa.email || '-'}</td>
+            <td>
+                <span class="badge badge-${empresa.estado === 'activa' ? 'success' : 'danger'}">
+                    ${empresa.estado}
+                </span>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline" onclick="window.verEmpresa(${empresa.id})">Ver</button>
+                <button class="btn btn-sm btn-outline" onclick="window.editarEmpresa(${empresa.id})">Editar</button>
+                <button class="btn btn-sm btn-danger" onclick="window.eliminarEmpresa(${empresa.id}, '${empresa.nombre.replace(/'/g, "\\'")}')">🗑️</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+window.verEmpresa = async (id) => {
+    try {
+        const response = await fetchAPI(`/api/empresas/${id}`);
+        const empresa = response.data || response.empresa || response;
+        
+        const content = `
+            <div style="line-height: 1.8;">
+                <p><strong>Nombre:</strong> ${empresa.nombre}</p>
+                ${empresa.cuit ? `<p><strong>CUIT:</strong> ${empresa.cuit}</p>` : ''}
+                ${empresa.telefono ? `<p><strong>Teléfono:</strong> ${empresa.telefono}</p>` : ''}
+                ${empresa.email ? `<p><strong>Email:</strong> ${empresa.email}</p>` : ''}
+                ${empresa.direccion ? `<p><strong>Dirección:</strong> ${empresa.direccion}</p>` : ''}
+                ${empresa.servicios_ofrecidos ? `<p><strong>Servicios:</strong> ${empresa.servicios_ofrecidos}</p>` : ''}
+                <p><strong>Estado:</strong> <span class="badge badge-${empresa.estado === 'activa' ? 'success' : 'danger'}">${empresa.estado}</span></p>
+                ${empresa.observaciones ? `<p><strong>Observaciones:</strong> ${empresa.observaciones}</p>` : ''}
+                <hr>
+                <p><strong>Afiliados Asociados:</strong> ${response.totalAfiliados || 0} (${response.afiliadosActivos || 0} activos)</p>
+            </div>
+        `;
+        
+        const footer = `
+            <button class="btn btn-outline" onclick="closeModal()">Cerrar</button>
+            <button class="btn btn-primary" onclick="closeModal(); modalEditarEmpresa(${id})">Editar</button>
+        `;
+        
+        createModal('Detalles de la Empresa', content, footer);
+    } catch (error) {
+        showAlert('Error cargando detalles de la empresa', 'error');
+    }
+};
+
+window.editarEmpresa = async (id) => {
+    modalEditarEmpresa(id);
+};
+
+window.eliminarEmpresa = async (id, nombre) => {
+    try {
+        const response = await fetchAPI(`/api/empresas/${id}`);
+        const totalAfiliados = response.totalAfiliados || 0;
+        
+        if (totalAfiliados > 0) {
+            showAlert(`No se puede eliminar. Tiene ${totalAfiliados} afiliado(s) asociado(s). Primero debes reasignarlos o eliminarlos.`, 'error');
+            return;
+        }
+        
+        if (!confirm(`¿Estás seguro de eliminar la empresa "${nombre}"?\n\nEsta acción NO se puede deshacer.`)) {
+            return;
+        }
+        
+        await fetchAPI(`/api/empresas/${id}`, { method: 'DELETE' });
+        
+        showAlert('Empresa eliminada exitosamente', 'success');
+        loadEmpresas();
+        loadDashboardStats();
+        
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error al eliminar empresa: ' + error.message, 'error');
+    }
+};
+
+// ========================================
+// PROFESIONALES
+// ========================================
+
+async function loadProfesionales() {
+    try {
+        const tbody = document.getElementById('tbody-profesionales');
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center">Cargando...</td></tr>';
+        
+        const data = await fetchAPI('/api/profesionales');
+        const profesionales = data.data || data.profesionales || [];
+        
+        if (profesionales.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="7" class="text-center">No hay profesionales registrados</td></tr>';
+            return;
+        }
+        
+        renderProfesionalesTable(profesionales);
+        cargarEmpresasFiltro();
+        
+    } catch (error) {
+        console.error('Error cargando profesionales:', error);
+        showAlert('Error cargando profesionales', 'error');
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center">Error al cargar datos</td></tr>';
+    }
+}
+
+async function cargarEmpresasFiltro() {
+    try {
+        const data = await fetchAPI('/api/empresas');
+        const empresas = data.data || data.empresas || [];
+        const select = document.getElementById('filtro-empresa-profesional');
+        
+        select.innerHTML = '<option value="">Todas las empresas</option>';
+        
+        empresas.forEach(empresa => {
+            const option = document.createElement('option');
+            option.value = empresa.id;
+            option.textContent = empresa.nombre;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error cargando empresas para filtro:', error);
+    }
+}
+
+function setupProfesionalesHandlers() {
+    document.getElementById('btn-nuevo-profesional').onclick = () => {
+        modalNuevoProfesional();
+    };
+    
+    document.getElementById('filtro-tipo-profesional').onchange = async (e) => {
+        const tipo = e.target.value;
+        const empresaId = document.getElementById('filtro-empresa-profesional').value;
+        let query = '';
+        if (tipo) query += `tipo_profesional=${tipo}`;
+        if (empresaId) query += (query ? '&' : '') + `empresa_id=${empresaId}`;
+        
+        const data = await fetchAPI(`/api/profesionales${query ? '?' + query : ''}`);
+        const profesionales = data.data || data.profesionales || [];
+        renderProfesionalesTable(profesionales);
+    };
+    
+    document.getElementById('filtro-empresa-profesional').onchange = async (e) => {
+        const empresaId = e.target.value;
+        const tipo = document.getElementById('filtro-tipo-profesional').value;
+        let query = '';
+        if (tipo) query += `tipo_profesional=${tipo}`;
+        if (empresaId) query += (query ? '&' : '') + `empresa_id=${empresaId}`;
+        
+        const data = await fetchAPI(`/api/profesionales${query ? '?' + query : ''}`);
+        const profesionales = data.data || data.profesionales || [];
+        renderProfesionalesTable(profesionales);
+    };
+}
+
+function renderProfesionalesTable(profesionales) {
+    const tbody = document.getElementById('tbody-profesionales');
+    
+    if (profesionales.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" class="text-center">No se encontraron resultados</td></tr>';
+        return;
+    }
+    
+    const tiposNombres = {
+        'medico': 'Médico',
+        'enfermero': 'Enfermero/a',
+        'kinesiologo': 'Kinesiólogo/a',
+        'terapeuta_ocupacional': 'T. Ocupacional',
+        'fonoaudiologo': 'Fonoaudiólogo/a',
+        'psicologo': 'Psicólogo/a',
+        'nutricionista': 'Nutricionista',
+        'otro': 'Otro'
+    };
+    
+    tbody.innerHTML = profesionales.map(prof => `
+        <tr>
+            <td>${prof.nombre_completo}</td>
+            <td>${tiposNombres[prof.tipo_profesional]}</td>
+            <td>${prof.matricula || '-'}</td>
+            <td>${prof.empresa_nombre || 'Independiente'}</td>
+            <td>${prof.telefono || '-'}</td>
+            <td>
+                <span class="badge badge-${prof.activo ? 'success' : 'danger'}">
+                    ${prof.activo ? 'Activo' : 'Inactivo'}
+                </span>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-outline" onclick="window.verProfesional(${prof.id})">Ver</button>
+                <button class="btn btn-sm btn-outline" onclick="modalEditarProfesional(${prof.id})">Editar</button>
+                <button class="btn btn-sm btn-danger" onclick="window.eliminarProfesional(${prof.id}, '${prof.nombre_completo.replace(/'/g, "\\'")}')">🗑️</button>
+            </td>
+        </tr>
+    `).join('');
+}
+
+window.verProfesional = async (id) => {
+    try {
+        const response = await fetchAPI(`/api/profesionales/${id}`);
+        const prof = response.data || response.profesional || response;
+        
+        const tiposProfesional = {
+            'medico': 'Médico',
+            'enfermero': 'Enfermero/a',
+            'kinesiologo': 'Kinesiólogo/a',
+            'terapeuta_ocupacional': 'Terapeuta Ocupacional',
+            'fonoaudiologo': 'Fonoaudiólogo/a',
+            'psicologo': 'Psicólogo/a',
+            'nutricionista': 'Nutricionista',
+            'otro': 'Otro'
+        };
+        
+        const content = `
+            <div style="line-height: 1.8;">
+                <p><strong>Nombre:</strong> ${prof.nombre_completo}</p>
+                <p><strong>Tipo:</strong> ${tiposProfesional[prof.tipo_profesional]}</p>
+                ${prof.matricula ? `<p><strong>Matrícula:</strong> ${prof.matricula}</p>` : ''}
+                ${prof.especialidad ? `<p><strong>Especialidad:</strong> ${prof.especialidad}</p>` : ''}
+                <p><strong>Empresa:</strong> ${prof.empresa_nombre || 'Independiente'}</p>
+                ${prof.telefono ? `<p><strong>Teléfono:</strong> ${prof.telefono}</p>` : ''}
+                ${prof.email ? `<p><strong>Email:</strong> ${prof.email}</p>` : ''}
+                ${prof.direccion ? `<p><strong>Dirección:</strong> ${prof.direccion}</p>` : ''}
+                ${prof.modalidad ? `<p><strong>Modalidad:</strong> ${prof.modalidad}</p>` : ''}
+                ${prof.honorarios_por_sesion ? `<p><strong>Honorarios por Sesión:</strong> ${prof.honorarios_por_sesion}</p>` : ''}
+                <p><strong>Estado:</strong> <span class="badge badge-${prof.activo ? 'success' : 'danger'}">${prof.activo ? 'Activo' : 'Inactivo'}</span></p>
+                ${prof.observaciones ? `<p><strong>Observaciones:</strong> ${prof.observaciones}</p>` : ''}
+            </div>
+        `;
+        
+        const footer = `
+            <button class="btn btn-outline" onclick="closeModal()">Cerrar</button>
+            <button class="btn btn-primary" onclick="closeModal(); modalEditarProfesional(${id})">Editar</button>
+        `;
+        
+        createModal('Detalles del Profesional', content, footer);
+        
+    } catch (error) {
+        showAlert('Error cargando detalles', 'error');
+    }
+};
+
+window.eliminarProfesional = async (id, nombreCompleto) => {
+    try {
+        if (!confirm(`¿Estás seguro de eliminar al profesional "${nombreCompleto}"?\n\nEsta acción NO se puede deshacer.`)) {
+            return;
+        }
+        
+        await fetchAPI(`/api/profesionales/${id}`, { method: 'DELETE' });
+        
+        showAlert('Profesional eliminado exitosamente', 'success');
+        loadProfesionales();
+        loadDashboardStats();
+        
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error al eliminar profesional: ' + error.message, 'error');
+    }
+};
+
+// ========================================
+// USUARIOS (SOLO ADMIN)
+// ========================================
+
+async function loadUsuarios() {
+    try {
+        const tbody = document.getElementById('tbody-usuarios');
+        tbody.innerHTML = '<tr><td colspan="6" class="text-center">Cargando...</td></tr>';
+        
+        // Obtener el filtro seleccionado
+        const filtroEstado = document.getElementById('filtro-estado-usuario')?.value || 'activo';
+        
+        const data = await fetchAPI(`/api/auth/usuarios?estado=${filtroEstado}`);
+        const usuarios = data.data || data.usuarios || [];
+        
+        tbody.innerHTML = usuarios.map(usuario => `
+            <tr>
+                <td>${usuario.nombre}</td>
+                <td>${usuario.email}</td>
+                <td><span class="badge badge-info">${usuario.rol}</span></td>
+                <td>
+                    <span class="badge badge-${usuario.activo ? 'success' : 'danger'}">
+                        ${usuario.activo ? 'Activo' : 'Inactivo'}
+                    </span>
+                </td>
+                <td>${usuario.ultimo_acceso ? new Date(usuario.ultimo_acceso).toLocaleString() : 'Nunca'}</td>
+                <td>
+                    <button class="btn btn-sm btn-outline" onclick="window.toggleUsuario(${usuario.id}, ${usuario.activo})">
+                        ${usuario.activo ? 'Desactivar' : 'Activar'}
+                    </button>
+                    <button class="btn btn-sm btn-danger" onclick="window.eliminarUsuario(${usuario.id}, '${usuario.email}')">
+                        🗑️ Eliminar
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    } catch (error) {
+        console.error('Error cargando usuarios:', error);
+        showAlert('Error cargando usuarios', 'error');
+    }
+}
+
+function setupUsuariosHandlers() {
+    document.getElementById('btn-nuevo-usuario').onclick = () => {
+        modalNuevoUsuario();
+    };
+    
+    // Event listener para el filtro
+    const filtroEstado = document.getElementById('filtro-estado-usuario');
+    if (filtroEstado) {
+        filtroEstado.addEventListener('change', () => {
+            loadUsuarios();
+        });
+    }
+}
+window.toggleUsuario = async (id, estadoActual) => {
+    try {
+        if (id === currentUser.id) {
+            showAlert('No puedes cambiar el estado de tu propia cuenta', 'error');
+            return;
+        }
+        if (estadoActual) {
+            // Desactivar usuario
+            await fetchAPI(`/api/auth/usuarios/${id}`, { method: 'DELETE' });
+            showAlert('Usuario desactivado exitosamente', 'success');
+        } else {
+            // Reactivar usuario
+            await fetchAPI(`/api/auth/usuarios/${id}/reactivar`, { method: 'PATCH' });
+            showAlert('Usuario reactivado exitosamente', 'success');
+        }
+        
+        loadUsuarios();
+    } catch (error) {
+        console.error('Error cambiando estado:', error);
+        showAlert('Error: ' + error.message, 'error');
+    }
+};
+
+window.eliminarUsuario = async (id, email) => {
+    try {
+        if (id === currentUser.id) {
+            showAlert('No puedes eliminar tu propia cuenta', 'error');
+            return;
+        }
+        
+        if (!confirm(`¿Estás seguro de eliminar el usuario "${email}"?\n\nEsta acción NO se puede deshacer.`)) {
+            return;
+        }
+        
+        if (!confirm(`⚠️ ÚLTIMA CONFIRMACIÓN\n\nSe eliminará permanentemente el usuario:\n${email}\n\n¿Continuar?`)) {
+            return;
+        }
+        
+        await fetchAPI(`/api/auth/usuarios/${id}`, { method: 'DELETE' });
+        
+        showAlert('Usuario eliminado exitosamente', 'success');
+        loadUsuarios();
+        loadDashboardStats();
+        
+    } catch (error) {
+        console.error('Error:', error);
+        showAlert('Error al eliminar usuario: ' + error.message, 'error');
+    }
+};
+
+// ========================================
+// LOGOUT
+// ========================================
+
+function setupLogout() {
+    document.getElementById('logout-btn').addEventListener('click', async () => {
+        try {
+            await fetchAPI('/api/auth/logout', { method: 'POST' });
+        } catch (error) {
+            console.error('Error en logout:', error);
+        } finally {
+            localStorage.removeItem('token');
+            window.location.href = '/pages/login.html';
+        }
+    });
+}
+
+// ========================================
+// EXPORTACIÓN Y REPORTES
+// ========================================
+
+async function exportarAfiliados(formato) {
+    try {
+        const token = getToken();
+        const estado = document.getElementById('filtro-estado-afiliado')?.value || '';
+        
+        showAlert(`Generando reporte ${formato.toUpperCase()}...`, 'info');
+        
+        const url = `/api/reportes/afiliados/${formato}${estado ? `?estado=${estado}` : ''}`;
+        
+        const response = await fetch(`${API_URL}${url}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Error al generar reporte');
+        }
+        
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `afiliados_${Date.now()}.${formato === 'excel' ? 'xlsx' : 'pdf'}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(downloadUrl);
+        document.body.removeChild(a);
+        
+        showAlert('Reporte descargado exitosamente', 'success');
+        
+    } catch (error) {
+        console.error('Error exportando:', error);
+        showAlert('Error al generar reporte', 'error');
+    }
+}
+
+async function exportarEmpresas() {
+    try {
+        const token = getToken();
+        
+        showAlert('Generando reporte Excel...', 'info');
+        
+        const response = await fetch(`${API_URL}/api/reportes/empresas/excel`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (!response.ok) {
+            throw new Error('Error al generar reporte');
+        }
+        
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `empresas_${Date.now()}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(downloadUrl);
+        document.body.removeChild(a);
+        
+        showAlert('Reporte descargado exitosamente', 'success');
+        
+    } catch (error) {
+        console.error('Error exportando:', error);
+        showAlert('Error al generar reporte', 'error');
+    }
+}
+
+async function exportarAtencionMedica(afiliadoId) {
+    try {
+        const token = getToken();
+        
+        showAlert('Generando reporte Excel...', 'info');
+        
+        const anioActual = new Date().getFullYear();
+        const response = await fetch(
+            `${API_URL}/api/reportes/atencion-medica/afiliado/${afiliadoId}/excel?anio=${anioActual}`,
+            {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            }
+        );
+        
+        if (!response.ok) {
+            throw new Error('Error al generar reporte');
+        }
+        
+        const blob = await response.blob();
+        const downloadUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `atencion_medica_${afiliadoId}_${Date.now()}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(downloadUrl);
+        document.body.removeChild(a);
+        
+        showAlert('Reporte descargado exitosamente', 'success');
+        
+    } catch (error) {
+        console.error('Error exportando:', error);
+        showAlert('Error al generar reporte', 'error');
+    }
+}
+
+// ========================================
+// FUNCIONES GLOBALES PARA EXPORTACIÓN
+// ========================================
+
+window.exportarAfiliados = exportarAfiliados;
+window.exportarEmpresas = exportarEmpresas;
+window.exportarAtencionMedica = exportarAtencionMedica;

@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nomenclador - Sistema IDO</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .nomenclador-container {
+            padding: 20px;
+        }
+        
+        .header-section {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+        }
+        
+        .filters-bar {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .filters-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .form-group select,
+        .form-group input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .table-container {
+            background: white;
+            border-radius: 8px;
+            overflow-x: auto;
+            overflow-y: visible;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            -webkit-overflow-scrolling: touch; /* Smooth scrolling en iOS */
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px; /* Ancho mínimo para mantener la estructura */
+        }
+        
+        thead {
+            background: #34495e;
+            color: white;
+        }
+        
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            white-space: nowrap; /* Evita que los títulos se rompan */
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        
+        .badge-vigente {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-no-vigente {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            color: #2c3e50;
+        }
+        
+        .close-modal {
+            font-size: 28px;
+            cursor: pointer;
+            color: #95a5a6;
+            background: none;
+            border: none;
+        }
+        
+        .close-modal:hover {
+            color: #e74c3c;
+        }
+        
+        .precio-grande {
+            font-size: 18px;
+            font-weight: bold;
+            color: #27ae60;
+        }
+
+        /* ===================================
+           RESPONSIVE PARA MÓVILES
+           =================================== */
+        
+        @media (max-width: 768px) {
+            .nomenclador-container {
+                padding: 10px;
+            }
+            
+            /* Header adaptativo */
+            .header-section {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+                margin-bottom: 20px;
+            }
+            
+            .header-section h1 {
+                font-size: 20px !important;
+            }
+            
+            .header-section > div:last-child {
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                gap: 10px;
+            }
+            
+            .header-section > div:last-child button {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            /* Filtros más compactos */
+            .filters-bar {
+                padding: 15px;
+            }
+            
+            .filters-row {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .filters-row .form-group label {
+                font-size: 13px;
+            }
+            
+            /* Tabla scrolleable */
+            .table-container {
+                border-radius: 8px;
+                margin-bottom: 15px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+            
+            /* Mensaje de scroll para el usuario */
+            .table-container::before {
+                content: '← Desliza para ver más →';
+                display: block;
+                text-align: center;
+                padding: 8px;
+                background: #f8f9fa;
+                color: #666;
+                font-size: 12px;
+                border-bottom: 1px solid #ecf0f1;
+            }
+            
+            table {
+                min-width: 700px;
+                font-size: 13px;
+            }
+            
+            th, td {
+                padding: 8px 6px;
+            }
+            
+            th {
+                font-size: 12px;
+            }
+            
+            /* Botones de acción más compactos */
+            .btn-sm {
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+            
+            /* Modal adaptado */
+            .modal-content {
+                padding: 20px;
+                width: 95%;
+                margin: 10px;
+            }
+            
+            .modal-header {
+                padding-bottom: 10px;
+            }
+            
+            .modal-header h2 {
+                font-size: 18px;
+            }
+            
+            .form-group label {
+                font-size: 13px;
+            }
+            
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                font-size: 14px;
+                padding: 8px 10px;
+            }
+        }
+        
+        /* Para pantallas muy pequeñas (< 400px) */
+        @media (max-width: 400px) {
+            .nomenclador-container {
+                padding: 8px;
+            }
+            
+            .header-section h1 {
+                font-size: 18px !important;
+            }
+            
+            .filters-bar {
+                padding: 12px;
+            }
+            
+            table {
+                min-width: 650px;
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 6px 4px;
+            }
+            
+            .badge {
+                font-size: 10px;
+                padding: 3px 8px;
+            }
+            
+            .modal-content {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="nomenclador-container">
+        <!-- Encabezado -->
+        <div class="header-section">
+            <div>
+                <h1 style="margin: 0 0 5px 0;">💵 Nomenclador de Prestaciones</h1>
+                <p style="color: #7f8c8d; margin: 0;">Gestiona precios y códigos de todas las prestaciones</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" onclick="window.location.href='/pages/facturacion.html'">
+                    ← Volver a Facturación
+                </button>
+                <button class="btn btn-success" onclick="abrirModalNuevo()">
+                    + Nueva Prestación
+                </button>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filters-bar">
+            <div class="filters-row">
+                <div class="form-group">
+                    <label>Tipo de Prestación</label>
+                    <select id="filtroTipo" onchange="cargarNomenclador()">
+                        <option value="">Todos los tipos</option>
+                        <option value="atencion_medica">Atención Médica</option>
+                        <option value="enfermeria">Enfermería</option>
+                        <option value="kinesiologia_ktm">Kinesiología KTM</option>
+                        <option value="kinesiologia_ktr">Kinesiología KTR</option>
+                        <option value="cuidados_domiciliarios">Cuidados Domiciliarios</option>
+                        <option value="especialidad_medica">Especialidad Médica</option>
+                        <option value="terapia_ocupacional">Terapia Ocupacional</option>
+                        <option value="fonoaudiologia">Fonoaudiología</option>
+                        <option value="psicologia">Psicología</option>
+                        <option value="nutricion">Nutrición</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Estado</label>
+                    <select id="filtroVigente" onchange="cargarNomenclador()">
+                        <option value="">Todos</option>
+                        <option value="true" selected>Vigentes</option>
+                        <option value="false">No vigentes</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-secondary" onclick="limpiarFiltros()">
+                        Limpiar Filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla -->
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Descripción</th>
+                        <th>Tipo</th>
+                        <th>Precio</th>
+                        <th>Unidad</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="nomencladorBody">
+                    <tr>
+                        <td colspan="7" style="text-align: center;">Cargando...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal: Nueva/Editar Prestación -->
+    <div class="modal" id="modalPrestacion">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Nueva Prestación</h2>
+                <button class="close-modal" onclick="cerrarModal()">&times;</button>
+            </div>
+            <form id="formPrestacion" onsubmit="guardarPrestacion(event)">
+                <input type="hidden" id="prestacionId">
+                
+                <div class="form-group">
+                    <label>Código *</label>
+                    <input type="text" id="codigo" required placeholder="Ej: AM001">
+                </div>
+                
+                <div class="form-group">
+                    <label>Descripción *</label>
+                    <input type="text" id="descripcion" required placeholder="Ej: Atención Médica Domiciliaria">
+                </div>
+                
+                <div class="form-group">
+                    <label>Tipo de Prestación *</label>
+                    <select id="tipoPrestacion" required>
+                        <option value="">Seleccione...</option>
+                        <option value="atencion_medica">Atención Médica</option>
+                        <option value="enfermeria">Enfermería</option>
+                        <option value="kinesiologia_ktm">Kinesiología KTM</option>
+                        <option value="kinesiologia_ktr">Kinesiología KTR</option>
+                        <option value="cuidados_domiciliarios">Cuidados Domiciliarios</option>
+                        <option value="especialidad_medica">Especialidad Médica</option>
+                        <option value="terapia_ocupacional">Terapia Ocupacional</option>
+                        <option value="fonoaudiologia">Fonoaudiología</option>
+                        <option value="psicologia">Psicología</option>
+                        <option value="nutricion">Nutrición</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Precio Unitario *</label>
+                    <input type="number" id="precioUnitario" step="0.01" min="0" required>
+                </div>
+                
+                <div class="form-group">
+                    <label>Unidad</label>
+                    <select id="unidad">
+                        <option value="unidad">Unidad</option>
+                        <option value="hora">Hora</option>
+                        <option value="sesion">Sesión</option>
+                        <option value="consulta">Consulta</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Obra Social (opcional)</label>
+                    <input type="text" id="obraSocial" placeholder="Dejar vacío para todas">
+                </div>
+                
+                <div class="form-group">
+                    <label>Observaciones</label>
+                    <textarea id="observaciones" rows="3"></textarea>
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="cerrarModal()">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/nomenclador.js"></script>
+</body>
+</html>

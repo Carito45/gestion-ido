@@ -1,0 +1,70 @@
+# Dependencias
+node_modules/
+package-lock.json
+
+# Variables de entorno (MUY IMPORTANTE)
+.env
+.env.local
+.env.production
+.env.backup
+
+# Bases de datos
+*.db
+*.db-journal
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+
+# Datos sensibles
+data/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Archivos subidos
+uploads/
+!uploads/.gitkeep
+config/uploads/
+
+# Sistema operativo
+.DS_Store
+Thumbs.db
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Backups y exportaciones
+*.backup
+*.bak
+backups/
+backup-*/
+*.tar.gz
+*.sql
+bd_export.sql
+nomenclador-restore.sql
+
+# Reportes de seguridad y tests
+security-report-*.txt
+test-results/
+SEGURIDAD.md
+
+# PM2 y configuración
+ecosystem.config.js
+.pm2
+
+# Temporal
+tmp/
+temp/
+
+# Scripts con datos de prueba
+crear-demo*.js
+crear-demo*.sh
+setup-demo*.js
+*-demo-*.js

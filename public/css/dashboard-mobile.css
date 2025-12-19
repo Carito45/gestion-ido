@@ -1,0 +1,254 @@
+/* ========================================
+   RESPONSIVE DASHBOARD MÓVIL
+   Solo afecta a dashboard.html
+   ======================================== */
+
+/* Botón menú hamburguesa */
+.mobile-menu-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 8px 12px;
+  color: var(--text-primary);
+  border-radius: 6px;
+  transition: background 0.2s;
+  line-height: 1;
+}
+
+.mobile-menu-toggle:hover {
+  background: var(--background);
+}
+
+.mobile-menu-toggle:active {
+  background: var(--border-color);
+}
+
+/* Estilos móviles */
+@media (max-width: 768px) {
+  /* Mostrar botón hamburguesa */
+  .mobile-menu-toggle {
+    display: block !important;
+  }
+  
+  /* Sidebar oculto por defecto */
+  .sidebar {
+    position: fixed;
+    left: -280px;
+    top: 0;
+    height: 100vh;
+    width: 280px;
+    z-index: 999;
+    transition: left 0.3s ease;
+    box-shadow: 2px 0 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  /* Sidebar visible */
+  .sidebar.active {
+    left: 0;
+  }
+  
+  /* Overlay oscuro cuando menú está abierto */
+  .sidebar.active::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 280px;
+    width: calc(100vw - 280px);
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: -1;
+  }
+  
+  /* Main content sin margen */
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  /* Topbar responsive */
+  .topbar {
+    padding: 12px 15px;
+    gap: 12px;
+  }
+  
+  .topbar h1 {
+    font-size: 18px;
+    flex: 1;
+    margin: 0;
+  }
+  
+  .topbar-actions {
+    flex-wrap: wrap;
+  }
+  
+  /* Content area más compacto */
+  .content-area {
+    padding: 15px;
+  }
+  
+  /* Cards responsive */
+  .card {
+    padding: 15px;
+    margin-bottom: 15px;
+  }
+  
+  .card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+    padding-bottom: 12px;
+  }
+  
+  .card-title {
+    font-size: 16px;
+  }
+  
+  .card-header > div {
+    width: 100%;
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  /* Stats en columna */
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  
+  .stat-card {
+    padding: 15px;
+  }
+  
+  .stat-label {
+    font-size: 13px;
+  }
+  
+  .stat-value {
+    font-size: 24px;
+  }
+  
+  /* Filtros en columna */
+  .filters {
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  
+  .filter-group {
+    width: 100%;
+    min-width: 0;
+  }
+  
+  .filter-group input,
+  .filter-group select {
+    width: 100%;
+  }
+  
+  /* Tablas scrolleables */
+  .table-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  table {
+    min-width: 650px;
+    font-size: 13px;
+  }
+  
+  th {
+    padding: 10px 8px;
+    font-size: 12px;
+  }
+  
+  td {
+    padding: 10px 8px;
+    font-size: 13px;
+  }
+  
+  /* Botones más compactos */
+  .btn {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  
+  .btn-sm {
+    padding: 5px 8px;
+    font-size: 11px;
+  }
+  
+  /* Modal responsive */
+  .modal-content {
+    width: 95%;
+    max-width: 95%;
+    max-height: 85vh;
+    margin: 10px;
+  }
+  
+  .modal-header,
+  .modal-body,
+  .modal-footer {
+    padding: 15px;
+  }
+  
+  .modal-title {
+    font-size: 18px;
+  }
+  
+  /* Formularios */
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 16px;
+  }
+  
+  /* User info en sidebar */
+  .user-info {
+    padding: 8px;
+  }
+  
+  .user-avatar {
+    width: 35px;
+    height: 35px;
+    font-size: 16px;
+  }
+  
+  .user-name {
+    font-size: 13px;
+  }
+  
+  .user-role {
+    font-size: 11px;
+  }
+  
+  /* Navigation items */
+  .nav-link {
+    padding: 10px 15px;
+    gap: 10px;
+  }
+  
+  .nav-icon {
+    width: 18px;
+    height: 18px;
+    font-size: 16px;
+  }
+}
+
+/* Para tablets */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .content-area {
+    padding: 20px;
+  }
+}

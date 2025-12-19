@@ -1,0 +1,739 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Facturación - Sistema IDO</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <style>
+        .facturas-container {
+            padding: 20px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .stat-card h3 {
+            margin: 0 0 10px 0;
+            font-size: 14px;
+            color: #666;
+            font-weight: normal;
+        }
+        
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .stat-card.pendiente .value { color: #f39c12; }
+        .stat-card.pagada .value { color: #27ae60; }
+        .stat-card.vencida .value { color: #e74c3c; }
+        
+        .filters-bar {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .filters-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            align-items: end;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group label {
+            margin-bottom: 5px;
+            font-weight: 500;
+            color: #2c3e50;
+        }
+        
+        .form-group select,
+        .form-group input {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background: #3498db;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #2980b9;
+        }
+        
+        .btn-success {
+            background: #27ae60;
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #229954;
+        }
+        
+        .btn-secondary {
+            background: #95a5a6;
+            color: white;
+        }
+        
+        .facturas-table {
+            background: white;
+            border-radius: 8px;
+            overflow-x: auto;
+            overflow-y: visible;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .table-header {
+            background: #34495e;
+            color: white;
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px; /* Ancho mínimo para 9 columnas */
+        }
+        
+        thead {
+            background: #ecf0f1;
+        }
+        
+        th {
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #2c3e50;
+            white-space: nowrap;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #ecf0f1;
+        }
+        
+        tbody tr:hover {
+            background: #f8f9fa;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        
+        .badge-pendiente {
+            background: #fff3cd;
+            color: #856404;
+        }
+        
+        .badge-pagada {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .badge-parcial {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .badge-vencida {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .badge-anulada {
+            background: #e2e3e5;
+            color: #383d41;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 5px;
+            flex-wrap: nowrap;
+        }
+        
+        .btn-sm {
+            padding: 5px 10px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            max-width: 800px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #ecf0f1;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            color: #2c3e50;
+        }
+        
+        .close-modal {
+            font-size: 28px;
+            cursor: pointer;
+            color: #95a5a6;
+            background: none;
+            border: none;
+        }
+        
+        .close-modal:hover {
+            color: #e74c3c;
+        }
+        
+        .factura-detalle {
+            margin-bottom: 20px;
+        }
+        
+        .detalle-row {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 15px;
+        }
+        
+        .detalle-item strong {
+            color: #7f8c8d;
+            display: block;
+            margin-bottom: 5px;
+        }
+        
+        .items-table {
+            margin: 20px 0;
+        }
+        
+        .totales {
+            margin-top: 20px;
+            text-align: right;
+        }
+        
+        .totales div {
+            padding: 5px 0;
+        }
+        
+        .totales .total-final {
+            font-size: 20px;
+            font-weight: bold;
+            color: #27ae60;
+            border-top: 2px solid #27ae60;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+        
+        .pagos-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #ecf0f1;
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #95a5a6;
+        }
+        
+        .empty-state i {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        /* ===================================
+           RESPONSIVE PARA MÓVILES
+           =================================== */
+        
+        @media (max-width: 768px) {
+            .facturas-container {
+                padding: 10px;
+            }
+            
+            /* Header adaptativo */
+            .facturas-container > div:first-child {
+                flex-direction: column !important;
+                align-items: flex-start !important;
+                gap: 15px;
+            }
+            
+            .facturas-container h1 {
+                font-size: 20px !important;
+            }
+            
+            .facturas-container > div:first-child > div:last-child {
+                display: flex;
+                flex-direction: column;
+                width: 100%;
+                gap: 10px;
+            }
+            
+            .facturas-container > div:first-child > div:last-child button {
+                width: 100%;
+                justify-content: center;
+            }
+            
+            /* Stats más compactos */
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+            
+            .stat-card {
+                padding: 15px;
+            }
+            
+            .stat-card h3 {
+                font-size: 12px;
+            }
+            
+            .stat-card .value {
+                font-size: 22px;
+            }
+            
+            /* Filtros adaptados */
+            .filters-bar {
+                padding: 15px;
+            }
+            
+            .filters-row {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .filters-row .form-group label {
+                font-size: 13px;
+            }
+            
+            /* Tabla scrolleable */
+            .facturas-table {
+                border-radius: 8px;
+                margin-bottom: 15px;
+                box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            }
+            
+            /* Mensaje de scroll */
+            .facturas-table::after {
+                content: '← Desliza horizontalmente para ver más →';
+                display: block;
+                text-align: center;
+                padding: 10px;
+                background: #f8f9fa;
+                color: #666;
+                font-size: 12px;
+                border-top: 1px solid #ecf0f1;
+            }
+            
+            .table-header {
+                padding: 12px 15px;
+            }
+            
+            .table-header h3 {
+                font-size: 14px !important;
+            }
+            
+            table {
+                min-width: 900px;
+                font-size: 13px;
+            }
+            
+            th, td {
+                padding: 8px 6px;
+            }
+            
+            th {
+                font-size: 12px;
+            }
+            
+            /* Botones más compactos */
+            .btn-sm {
+                padding: 4px 8px;
+                font-size: 11px;
+            }
+            
+            .actions {
+                gap: 3px;
+            }
+            
+            .badge {
+                font-size: 10px;
+                padding: 3px 8px;
+            }
+            
+            /* Modales adaptados */
+            .modal-content {
+                padding: 20px;
+                width: 95%;
+                margin: 10px;
+                max-width: 95%;
+            }
+            
+            .modal-header {
+                padding-bottom: 10px;
+            }
+            
+            .modal-header h2 {
+                font-size: 18px;
+            }
+            
+            .detalle-row {
+                grid-template-columns: 1fr;
+                gap: 12px;
+            }
+            
+            .form-group label {
+                font-size: 13px;
+            }
+            
+            .form-group input,
+            .form-group select,
+            .form-group textarea {
+                font-size: 14px;
+                padding: 8px 10px;
+            }
+            
+            /* Botones del modal en columna */
+            .modal-content form > div:last-child {
+                flex-direction: column !important;
+            }
+            
+            .modal-content form > div:last-child button {
+                width: 100%;
+            }
+        }
+        
+        /* Para pantallas muy pequeñas (< 400px) */
+        @media (max-width: 400px) {
+            .facturas-container {
+                padding: 8px;
+            }
+            
+            .facturas-container h1 {
+                font-size: 18px !important;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+                gap: 8px;
+            }
+            
+            .filters-bar {
+                padding: 12px;
+            }
+            
+            table {
+                min-width: 850px;
+                font-size: 12px;
+            }
+            
+            th, td {
+                padding: 6px 4px;
+            }
+            
+            .modal-content {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="facturas-container">
+        <!-- Encabezado -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <div>
+                <h1 style="margin: 0 0 5px 0;">💰 Gestión de Facturación</h1>
+                <p style="color: #7f8c8d; margin: 0;">Genera y administra facturas a obras sociales</p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-secondary" onclick="window.location.href='/pages/nomenclador.html'">
+                    💵 Nomenclador
+                </button>
+                <button class="btn btn-success" onclick="abrirModalGenerarFactura()">
+                    + Nueva Factura
+                </button>
+            </div>
+        </div>
+
+        <!-- Estadísticas -->
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <h3>Total Facturas</h3>
+                <div class="value" id="totalFacturas">0</div>
+            </div>
+            <div class="stat-card pendiente">
+                <h3>Pendientes</h3>
+                <div class="value" id="totalPendientes">0</div>
+            </div>
+            <div class="stat-card pagada">
+                <h3>Pagadas</h3>
+                <div class="value" id="totalPagadas">0</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Facturado</h3>
+                <div class="value" id="totalFacturado">$0</div>
+            </div>
+            <div class="stat-card pagada">
+                <h3>Total Cobrado</h3>
+                <div class="value" id="totalCobrado">$0</div>
+            </div>
+            <div class="stat-card vencida">
+                <h3>Saldo Pendiente</h3>
+                <div class="value" id="saldoPendiente">$0</div>
+            </div>
+        </div>
+
+        <!-- Filtros -->
+        <div class="filters-bar">
+            <div class="filters-row">
+                <div class="form-group">
+                    <label>Estado</label>
+                    <select id="filtroEstado" onchange="cargarFacturas()">
+                        <option value="">Todos</option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="pagada">Pagada</option>
+                        <option value="parcial">Parcial</option>
+                        <option value="vencida">Vencida</option>
+                        <option value="anulada">Anulada</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Mes</label>
+                    <select id="filtroMes" onchange="cargarFacturas()">
+                        <option value="">Todos</option>
+                        <option value="1">Enero</option>
+                        <option value="2">Febrero</option>
+                        <option value="3">Marzo</option>
+                        <option value="4">Abril</option>
+                        <option value="5">Mayo</option>
+                        <option value="6">Junio</option>
+                        <option value="7">Julio</option>
+                        <option value="8">Agosto</option>
+                        <option value="9">Septiembre</option>
+                        <option value="10">Octubre</option>
+                        <option value="11">Noviembre</option>
+                        <option value="12">Diciembre</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Año</label>
+                    <select id="filtroAnio" onchange="cargarFacturas()">
+                        <option value="">Todos</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                    <button class="btn btn-secondary" onclick="limpiarFiltros()">
+                        Limpiar Filtros
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de facturas -->
+        <div class="facturas-table">
+            <div class="table-header">
+                <h3 style="margin: 0;">📋 Listado de Facturas</h3>
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>N° Factura</th>
+                        <th>Afiliado</th>
+                        <th>Obra Social</th>
+                        <th>Período</th>
+                        <th>Fecha Emisión</th>
+                        <th>Total</th>
+                        <th>Pagado</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="facturasBody">
+                    <tr>
+                        <td colspan="9" class="empty-state">
+                            <div>📄</div>
+                            <div>Cargando facturas...</div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Modal: Generar Factura -->
+    <div class="modal" id="modalGenerarFactura">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>🧾 Generar Nueva Factura</h2>
+                <button class="close-modal" onclick="cerrarModalGenerarFactura()">&times;</button>
+            </div>
+            <form id="formGenerarFactura" onsubmit="generarFactura(event)">
+                <div class="form-group">
+                    <label>Afiliado *</label>
+                    <select id="afiliadoSelect" required>
+                        <option value="">Seleccione un afiliado</option>
+                    </select>
+                </div>
+                <div class="detalle-row">
+                    <div class="form-group">
+                        <label>Mes *</label>
+                        <select id="periodoMes" required>
+                            <option value="1">Enero</option>
+                            <option value="2">Febrero</option>
+                            <option value="3">Marzo</option>
+                            <option value="4">Abril</option>
+                            <option value="5">Mayo</option>
+                            <option value="6">Junio</option>
+                            <option value="7">Julio</option>
+                            <option value="8">Agosto</option>
+                            <option value="9">Septiembre</option>
+                            <option value="10">Octubre</option>
+                            <option value="11">Noviembre</option>
+                            <option value="12">Diciembre</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Año *</label>
+                        <select id="periodoAnio" required></select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Observaciones</label>
+                    <textarea id="observaciones" rows="3" style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 4px;"></textarea>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="cerrarModalGenerarFactura()">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Generar Factura</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal: Detalle Factura -->
+    <div class="modal" id="modalDetalleFactura">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📄 Detalle de Factura</h2>
+                <button class="close-modal" onclick="cerrarModalDetalle()">&times;</button>
+            </div>
+            <div id="facturaDetalleContent"></div>
+        </div>
+    </div>
+
+    <!-- Modal: Registrar Pago -->
+    <div class="modal" id="modalRegistrarPago">
+        <div class="modal-content" style="max-width: 500px;">
+            <div class="modal-header">
+                <h2>💵 Registrar Pago</h2>
+                <button class="close-modal" onclick="cerrarModalPago()">&times;</button>
+            </div>
+            <form id="formRegistrarPago" onsubmit="registrarPago(event)">
+                <input type="hidden" id="pagoFacturaId">
+                <div class="form-group">
+                    <label>Monto a Pagar *</label>
+                    <input type="number" id="pagoMonto" step="0.01" min="0.01" required>
+                    <small id="saldoInfo" style="color: #7f8c8d;"></small>
+                </div>
+                <div class="form-group">
+                    <label>Fecha de Pago *</label>
+                    <input type="date" id="pagoFecha" required>
+                </div>
+                <div class="form-group">
+                    <label>Medio de Pago *</label>
+                    <select id="pagoMedio" required>
+                        <option value="">Seleccione...</option>
+                        <option value="efectivo">Efectivo</option>
+                        <option value="transferencia">Transferencia</option>
+                        <option value="cheque">Cheque</option>
+                        <option value="tarjeta">Tarjeta</option>
+                        <option value="otro">Otro</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>N° Comprobante</label>
+                    <input type="text" id="pagoComprobante">
+                </div>
+                <div class="form-group">
+                    <label>Observaciones</label>
+                    <textarea id="pagoObservaciones" rows="2"></textarea>
+                </div>
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="cerrarModalPago()">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Registrar Pago</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="/js/auth.js"></script>
+    <script src="/js/facturacion.js"></script>
+</body>
+</html>

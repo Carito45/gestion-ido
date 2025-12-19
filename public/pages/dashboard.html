@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Sistema de Gestión IDO</title>
+    <link rel="stylesheet" href="/css/styles.css">
+    <link rel="stylesheet" href="/css/dashboard-mobile.css">
+</head>
+<body>
+    <div class="dashboard">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h2>🏥 Sistema IDO</h2>
+                <div class="user-info">
+                    <div class="user-avatar" id="user-avatar"></div>
+                    <div class="user-details">
+                        <div class="user-name" id="user-name">Cargando...</div>
+                        <div class="user-role" id="user-role"></div>
+                    </div>
+                </div>
+            </div>
+            
+            <nav>
+                <ul class="nav-menu">
+                    <li class="nav-item">
+                        <a class="nav-link active" data-section="inicio">
+                            <span class="nav-icon">📊</span>
+                            <span>Inicio</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-section="afiliados">
+                            <span class="nav-icon">👥</span>
+                            <span>Afiliados</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-section="empresas">
+                            <span class="nav-icon">🏢</span>
+                            <span>Empresas Prestadoras</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-section="profesionales">
+                            <span class="nav-icon">👨‍⚕️</span>
+                            <span>Profesionales</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-section="facturacion">
+                            <span class="nav-icon">🧾</span>
+                            <span>Facturación</span>
+                        </a>
+                    </li>
+                    <li class="nav-item admin-only hidden">
+                        <a class="nav-link" data-section="usuarios">
+                            <span class="nav-icon">👤</span>
+                            <span>Usuarios</span>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" id="logout-btn">
+                            <span class="nav-icon">🚪</span>
+                            <span>Cerrar Sesión</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <div class="topbar">
+                <!-- NUEVO: Botón hamburguesa -->
+                <button class="mobile-menu-toggle" id="mobile-menu-toggle" aria-label="Abrir menú">
+                    ☰
+                </button>
+                
+                <h1 id="page-title">Dashboard</h1>
+                <div class="topbar-actions">
+                    <button class="btn btn-primary" id="quick-action" style="display: none;">
+                        + Nuevo
+                    </button>
+                </div>
+            </div>
+
+            <div class="content-area">
+                <!-- Sección Inicio -->
+                <div id="section-inicio" class="section active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-label">Total Afiliados</div>
+                            <div class="stat-value" id="stat-afiliados">-</div>
+                        </div>
+                        <div class="stat-card success">
+                            <div class="stat-label">Afiliados Activos</div>
+                            <div class="stat-value" id="stat-activos">-</div>
+                        </div>
+                        <div class="stat-card warning">
+                            <div class="stat-label">Empresas Prestadoras</div>
+                            <div class="stat-value" id="stat-empresas">-</div>
+                        </div>
+                        <div class="stat-card info">
+                            <div class="stat-label">Profesionales</div>
+                            <div class="stat-value" id="stat-profesionales">-</div>
+                        </div>
+                        <div class="stat-card danger admin-only hidden">
+                            <div class="stat-label">Usuarios</div>
+                            <div class="stat-value" id="stat-usuarios">-</div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Bienvenido al Sistema de Gestión IDO</h3>
+                        </div>
+                        <p>Utiliza el menú lateral para navegar entre las diferentes secciones del sistema.</p>
+                    </div>
+                </div>
+
+                <!-- Sección Afiliados -->
+                <div id="section-afiliados" class="section hidden">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Gestión de Afiliados</h3>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn btn-outline" onclick="exportarAfiliados('excel')">📊 Excel</button>
+                                <button class="btn btn-outline" onclick="exportarAfiliados('pdf')">📄 PDF</button>
+                                <button class="btn btn-primary" id="btn-nuevo-afiliado">+ Nuevo Afiliado</button>
+                            </div>
+                        </div>
+                        
+                        <div class="filters">
+                            <div class="filter-group">
+                                <input type="text" id="buscar-afiliado" placeholder="Buscar por nombre, DNI o número de afiliado..." class="form-control">
+                            </div>
+                            <div class="filter-group">
+                                <select id="filtro-estado-afiliado">
+                                    <option value="">Todos los estados</option>
+                                    <option value="activo">Activos</option>
+                                    <option value="egresado">Egresados</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <table id="tabla-afiliados">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>DNI</th>
+                                        <th>Número Afiliado</th>
+                                        <th>Obra Social</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-afiliados">
+                                    <tr>
+                                        <td colspan="7" class="text-center">Cargando...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección Empresas -->
+                <div id="section-empresas" class="section hidden">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Empresas Prestadoras</h3>
+                            <div style="display: flex; gap: 10px;">
+                                <button class="btn btn-outline" onclick="exportarEmpresas()">📊 Excel</button>
+                                <button class="btn btn-primary" id="btn-nueva-empresa">+ Nueva Empresa</button>
+                            </div>
+                        </div>
+                        
+                        <div class="filters">
+                            <div class="filter-group">
+                                <input type="text" id="buscar-empresa" placeholder="Buscar empresa..." class="form-control">
+                            </div>
+                            <div class="filter-group">
+                                <select id="filtro-estado-empresa">
+                                    <option value="">Todos los estados</option>
+                                    <option value="activa">Activas</option>
+                                    <option value="inactiva">Inactivas</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <table id="tabla-empresas">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>CUIT</th>
+                                        <th>Teléfono</th>
+                                        <th>Email</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-empresas">
+                                    <tr>
+                                        <td colspan="6" class="text-center">Cargando...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección Usuarios (solo admin) -->
+                <div id="section-usuarios" class="section hidden admin-only">
+                    <div class="card">
+                      <div class="card-header">
+    <h3 class="card-title">Gestión de Usuarios</h3>
+    <div style="display: flex; gap: 10px; align-items: center;">
+        <select id="filtro-estado-usuario" class="form-control" style="width: 150px;">
+            <option value="activo">Activos</option>
+            <option value="inactivo">Inactivos</option>
+            <option value="todos">Todos</option>
+        </select>
+        <button class="btn btn-primary" id="btn-nuevo-usuario">+ Nuevo Usuario</button>
+    </div>
+</div> 
+
+                        <div class="table-container">
+                            <table id="tabla-usuarios">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Email</th>
+                                        <th>Rol</th>
+                                        <th>Estado</th>
+                                        <th>Último Acceso</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-usuarios">
+                                    <tr>
+                                        <td colspan="6" class="text-center">Cargando...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección Profesionales -->
+                <div id="section-profesionales" class="section hidden">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Gestión de Profesionales</h3>
+                            <button class="btn btn-primary" id="btn-nuevo-profesional">+ Nuevo Profesional</button>
+                        </div>
+                        
+                        <div class="filters">
+                            <div class="filter-group">
+                                <select id="filtro-tipo-profesional">
+                                    <option value="">Todos los tipos</option>
+                                    <option value="medico">Médicos</option>
+                                    <option value="enfermero">Enfermeros</option>
+                                    <option value="kinesiologo">Kinesiólogos</option>
+                                    <option value="terapeuta_ocupacional">Terapeutas Ocupacionales</option>
+                                    <option value="fonoaudiologo">Fonoaudiólogos</option>
+                                    <option value="psicologo">Psicólogos</option>
+                                    <option value="nutricionista">Nutricionistas</option>
+                                </select>
+                            </div>
+                            <div class="filter-group">
+                                <select id="filtro-empresa-profesional">
+                                    <option value="">Todas las empresas</option>
+                                    <option value="independiente">Independientes</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <table id="tabla-profesionales">
+                                <thead>
+                                    <tr>
+                                        <th>Nombre</th>
+                                        <th>Tipo</th>
+                                        <th>Matrícula</th>
+                                        <th>Empresa</th>
+                                        <th>Teléfono</th>
+                                        <th>Estado</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody-profesionales">
+                                    <tr>
+                                        <td colspan="7" class="text-center">Cargando...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Scripts -->
+    <script src="/js/auth.js"></script>
+    <script src="/js/dashboard.js"></script>
+    <script src="/js/modals.js"></script>
+    
+    <!-- NUEVO: Script para menú móvil -->
+    <script>
+        // Control del menú móvil
+        document.addEventListener('DOMContentLoaded', function() {
+            const menuToggle = document.getElementById('mobile-menu-toggle');
+            const sidebar = document.getElementById('sidebar');
+            const navLinks = document.querySelectorAll('.nav-link');
+            
+            // Toggle del menú
+            if (menuToggle) {
+                menuToggle.addEventListener('click', function() {
+                    sidebar.classList.toggle('active');
+                });
+            }
+            
+            // Cerrar menú al hacer click en un link (solo en móvil)
+            navLinks.forEach(link => {
+                link.addEventListener('click', function() {
+                    if (window.innerWidth <= 768) {
+                        sidebar.classList.remove('active');
+                    }
+                });
+            });
+            
+            // Cerrar menú al hacer click en el overlay
+            sidebar.addEventListener('click', function(e) {
+                if (e.target === sidebar && sidebar.classList.contains('active')) {
+                    sidebar.classList.remove('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

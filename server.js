@@ -159,12 +159,12 @@ app.use(session({
 // 📂 ARCHIVOS ESTÁTICOS
 // ===============================================
 app.use(staticFilesHeaders);
-app.use(express.static('public', {
+app.use(express.static(path.join(__dirname, 'public'), {
   maxAge: isDevelopment ? 0 : '1d',
   etag: true
 }));
 
-app.use('/uploads', express.static('uploads', {
+app.use('/uploads', express.static(path.join(__dirname, 'uploads'), {
   maxAge: '7d',
   etag: true
 }));

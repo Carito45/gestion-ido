@@ -37,8 +37,7 @@ function getHelmetConfig(isDevelopment = false) {
         ],
         styleSrc: [
           "'self'",
-          // Solo permitir inline styles con hash específico si es necesario
-          "'sha256-47DEQpj8HBSa+/TImW+5JCeuQeRkm5NMpJWZG3hSuFU='" // empty string hash
+          "'unsafe-inline'"
         ],
         imgSrc: ["'self'", "data:", "blob:"],
         fontSrc: ["'self'", "data:"],

@@ -188,6 +188,12 @@ app.get('/health', (req, res) => {
   });
 });
 
+// TEMPORAL - BORRAR DESPUÉS DE CREAR ADMIN
+app.get('/init-admin-temp', (req, res) => {
+  require('./init-admin-render');
+  res.send('Admin creado!');
+});
+// FIN TEMPORAL
 // ===============================================
 // 🚏 RUTAS DE API
 // ===============================================

@@ -5,16 +5,12 @@ require('dotenv').config();
 async function crearAdmin() {
   const db = await initDB();
   const hash = await bcrypt.hash('Demo2026!', 10);
-  try {
-    await db.run(
-      `INSERT INTO usuarios (nombre_completo, email, password, rol, activo)
-       VALUES (?, ?, ?, 'admin', 1)`,
-      ['Admin IDO', 'adminIdo@demo.com', hash]
-    );
-    console.log('✅ Admin creado OK');
-  } catch (err) {
-    console.error('Error:', err.message);
-  }
+  await db.run(
+    `INSERT INTO usuarios (nombre_completo, email, password, rol, activo)
+     VALUES (?, ?, ?, 'admin', 1)`,
+    ['Admin IDO', 'adminIdo@demo.com', hash]
+  );
+  console.log('✅ Admin creado OK');
 }
 
-crearAdmin();
+module.exports = crearAdmin;

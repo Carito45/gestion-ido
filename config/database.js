@@ -3,7 +3,7 @@ const path = require('path');
 const sqlite3 = require('sqlite3');
 const { open } = require('sqlite');
 const logger = require('./logger');
-
+const crearAdminInicial = require('../init-admin-render');
 // ========================================
 // CONFIGURACIÓN DE RUTA Y CARPETA
 // ========================================
@@ -235,7 +235,7 @@ await db.exec(`
 
     console.log(`✅ Base de datos inicializada correctamente: ${dbPath}`);
     logger.info(`Base de datos conectada en: ${dbPath}`);
-
+await crearAdminInicial(db);
     return db;
   } catch (err) {
     console.error('❌ Error inicializando la base de datos:', err.message);

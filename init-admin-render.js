@@ -1,20 +1,20 @@
 const bcrypt = require('bcryptjs');
-const sqlite3 = require('sqlite3').verbose();
-const path = require('path');
+const { initDB } = require('./config/database');
 require('dotenv').config();
 
-const dbPath = path.join(__dirname, 'data', process.env.DB_NAME || 'gestion_ido.db');
-const db = new sqlite3.Database(dbPath);
+async function crearAdmin() {
+  const db = await initDB();
+  const hash = await bcrypt.hash('Demo2026!', 10);
+  try {
+    await db.run(
+      `INSERT INTO usuarios (nombre_completo, email, password, rol, activo)
+       VALUES (?, ?, ?, 'admin', 1)`,
+      ['Admin IDO', 'adminIdo@demo.com', hash]
+    );
+    console.log('✅ Admin creado OK');
+  } catch (err) {
+    console.error('Error:', err.message);
+  }
+}
 
-bcrypt.hash('Demo2026!', 10).then(hash => {
-  db.run(
-    `INSERT INTO usuarios (nombre_completo, email, password, rol, activo)
-     VALUES (?, ?, ?, 'admin', 1)`,
-    ['Admin IDO', 'adminIdo@demo.com', hash],
-    function(err) {
-      if (err) console.error('Error:', err.message);
-      else console.log('Admin creado OK, id:', this.lastID);
-      db.close();
-    }
-  );
-});
+crearAdmin();

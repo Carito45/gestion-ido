@@ -197,6 +197,13 @@ app.get('/init-admin-temp', async (req, res) => {
     res.send('Error: ' + err.message);
   }
 });
+
+app.get('/check-admin', async (req, res) => {
+  const { getDB } = require('./config/database');
+  const db = getDB();
+  const usuarios = await db.all('SELECT id, email, rol, activo FROM usuarios');
+  res.json(usuarios);
+});
 // FIN TEMPORAL
 // ===============================================
 // 🚏 RUTAS DE API

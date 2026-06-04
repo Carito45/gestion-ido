@@ -3,7 +3,7 @@ const sqlite3 = require('sqlite3').verbose();
 const path = require('path');
 require('dotenv').config();
 
-const dbPath = path.join(__dirname, process.env.DB_NAME || 'gestion_ido.db');
+const dbPath = path.join(__dirname, 'data', process.env.DB_NAME || 'gestion_ido.db');
 const db = new sqlite3.Database(dbPath);
 
 bcrypt.hash('Demo2026!', 10).then(hash => {

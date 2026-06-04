@@ -46,6 +46,7 @@ let dbInitialized = false;
 // ⚙️ CONFIGURACIÓN PRINCIPAL
 // ===============================================
 const app = express();
+app.set('trust proxy', 1);
 const PORT = process.env.PORT || 3000;
 const isDevelopment = process.env.NODE_ENV !== 'production';
 

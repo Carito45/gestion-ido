@@ -31,10 +31,12 @@ function getHelmetConfig(isDevelopment = false) {
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: [
-          "'self'",
-          // Usar nonces en lugar de unsafe-inline
-          (req, res) => `'nonce-${res.locals.nonce}'`
-        ],
+  "'self'",
+  "'unsafe-inline'"
+],
+scriptSrcAttr: [
+  "'unsafe-inline'"
+],
         styleSrc: [
           "'self'",
           "'unsafe-inline'"

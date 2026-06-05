@@ -31,12 +31,12 @@ function getHelmetConfig(isDevelopment = false) {
       directives: {
         defaultSrc: ["'self'"],
         scriptSrc: [
-  "'self'",
-  "'unsafe-inline'"
-],
-scriptSrcAttr: [
-  "'unsafe-inline'"
-],
+          "'self'",
+          "'unsafe-inline'"
+        ],
+        scriptSrcAttr: [
+          "'unsafe-inline'"
+        ],
         styleSrc: [
           "'self'",
           "'unsafe-inline'"

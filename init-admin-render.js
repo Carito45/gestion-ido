@@ -1,7 +1,7 @@
 const bcrypt = require('bcryptjs');
 
 async function crearAdminInicial(db) {
-  const email = process.env.ADMIN_EMAIL;
+  const email = process.env.ADMIN_EMAIL.toLowerCase().trim();
   const password = process.env.ADMIN_PASSWORD;
   const nombre = 'Admin IDO';
 

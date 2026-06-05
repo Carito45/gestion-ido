@@ -188,23 +188,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// TEMPORAL - BORRAR DESPUÉS DE CREAR ADMIN
-app.get('/init-admin-temp', async (req, res) => {
-  try {
-    await require('./init-admin-render')();
-    res.send('Admin creado!');
-  } catch(err) {
-    res.send('Error: ' + err.message);
-  }
-});
 
-app.get('/check-admin', async (req, res) => {
-  const { getDB } = require('./config/database');
-  const db = getDB();
-  const usuarios = await db.all('SELECT id, email, rol, activo FROM usuarios');
-  res.json(usuarios);
-});
-// FIN TEMPORAL
 // ===============================================
 // 🚏 RUTAS DE API
 // ===============================================

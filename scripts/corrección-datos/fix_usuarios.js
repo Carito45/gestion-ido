@@ -2,7 +2,7 @@ require('dotenv').config();
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
 
-const db = new sqlite3.Database('./data/gestion_ido.db');
+const db = new sqlite3.Database('../data/gestion_ido.db');
 
 // Helper para queries con promesas
 const runQuery = (query, params = []) => {

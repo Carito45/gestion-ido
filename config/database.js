@@ -3,7 +3,7 @@ const path = require('path');
 const sqlite3 = require('sqlite3');
 const { open } = require('sqlite');
 const logger = require('./logger');
-const crearAdminInicial = require('../init-admin-render');
+const crearAdminInicial = require('../scripts/init-admin-render');
 // ========================================
 // CONFIGURACIÓN DE RUTA Y CARPETA
 // ========================================

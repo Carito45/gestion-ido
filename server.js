@@ -328,16 +328,6 @@ const gracefulShutdown = async (signal) => {
   process.on(signal, () => gracefulShutdown(signal));
 });
 
-// ✅ BONUS: Capturar errores no manejados
-process.on('uncaughtException', (err) => {
-  logger.error('💥 Excepción no capturada:', err);
-  gracefulShutdown('uncaughtException');
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  logger.error('💥 Promesa rechazada sin manejar:', { reason, promise });
-  gracefulShutdown('unhandledRejection');
-});
 // ===============================================
 // 💥 ERRORES NO CAPTURADOS (FATALES)
 // ===============================================

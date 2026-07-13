@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { encrypt, decrypt, encryptFields, decryptFields } = require('./config/encryption');
+const { encrypt, decrypt, encryptFields, decryptFields } = require('../config/encryption');
 
 console.log('\n🔐 ========================================');
 console.log('   TEST DE CIFRADO');

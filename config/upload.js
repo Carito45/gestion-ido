@@ -2,7 +2,7 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const logger = require('./logger');
-const { validarCategoria } = require('../security-utils');
+const { validarCategoria } = require('../helpers/security-utils');
 // Crear directorio de uploads si no existe
 const uploadsDir = path.join(__dirname, '..', 'uploads');
 if (!fs.existsSync(uploadsDir)) {

@@ -1,5 +1,6 @@
 # 🏥 Sistema de Gestión IDO
 Sistema de Gestión para Internación Domiciliaria
+Stack Tecnológico: Node.js | Express.js | SQLite | JavaScript Vanilla | HTML/CSS
 
 ## 📋 Características
 
@@ -23,7 +24,8 @@ Sistema de Gestión para Internación Domiciliaria
 
 1. **Clonar/descargar el proyecto**
 ```bash
-cd ~/gestion-ido
+git clone https://github.com/Carito45/gestion-ido.git
+cd gestion-ido
 ```
 
 2. **Instalar dependencias**
@@ -74,15 +76,15 @@ npm run logs:clean # Limpiar logs
 ```
 gestion-ido/
 ├── config/          # Configuraciones (BD, logs, uploads, PDF)
+├── helpers/         # Utilidades y funciones auxiliares (seguridad)
 ├── middleware/      # Middlewares (auth, validaciones)
-├── routes/          # Rutas de la API
 ├── public/          # Frontend (HTML, CSS, JS)
+├── routes/          # Rutas de la API
+├── scripts/         # Scripts de utilidad, testing y semilla de datos
 ├── uploads/         # Archivos subidos
 ├── logs/            # Logs del sistema
 ├── server.js        # Servidor principal
-├── security-utils.js # Utilidades de seguridad
 └── .env             # Variables de entorno (NO subir a Git)
-```
 
 ## 👥 Roles de Usuario
 

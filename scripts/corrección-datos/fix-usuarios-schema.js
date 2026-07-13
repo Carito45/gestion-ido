@@ -1,5 +1,5 @@
 const sqlite3 = require('sqlite3').verbose();
-const db = new sqlite3.Database('./data/gestion_ido.db');
+const db = new sqlite3.Database('../data/gestion_ido.db');
 
 console.log('🔧 Arreglando esquema de usuarios...');
 

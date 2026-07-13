@@ -5,7 +5,7 @@ const { getDB } = require('../config/database');
 const logger = require('../config/logger');
 const { verificarToken, verificarRol } = require('../middleware/auth');
 const { validar, facturaSchema, pagoFacturaSchema } = require('../middleware/validations');
-const { validarMonto } = require('../security-utils');
+const { validarMonto } = require('../helpers/security-utils');
 // Aplicar autenticación a todas las rutas
 router.use(verificarToken);
 

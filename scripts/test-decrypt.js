@@ -1,7 +1,7 @@
 const sqlite3 = require('sqlite3').verbose();
-const { decryptFields } = require('./config/encryption');
+const { decryptFields } = require('../config/encryption');
 
-const db = new sqlite3.Database('./gestion_ido.db');
+const db = new sqlite3.Database('../data/gestion_ido.db');
 
 const CAMPOS_SENSIBLES = [
   'diagnostico',
